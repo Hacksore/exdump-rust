@@ -41,7 +41,7 @@ pub struct Publisher {
     pub publisher_name: String,
     pub display_name: String,
     pub flags: String,
-    pub domain: String,
+    pub domain: Option<String>,
     pub is_domain_verified: bool,
 }
 
