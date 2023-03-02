@@ -1,7 +1,7 @@
 use std::process::{Command, Stdio};
 
 use crate::models::marketplace_request::{Criterum, Filter, MarketplaceRequest};
-use crate::models::marketplace_response::MarketplaceResponse;
+use crate::models::marketplace_response::{Extension, MarketplaceResponse};
 
 const VSCODE_API_URL: &str =
   "https://marketplace.visualstudio.com/_apis/public/gallery/extensionquery";
@@ -18,9 +18,13 @@ pub fn get_vscode_extensions() -> Vec<String> {
   output_string.lines().map(|s| s.to_string()).collect()
 }
 
-pub async fn get_extension_metadata(
-  id: String,
-) -> Result<Option<MarketplaceResponse>, surf::Error> {
+#[derive(Debug)]
+pub struct ExtensionMetadata {
+  pub id: String,
+  pub url: String,
+}
+
+pub async fn get_extension_metadata(id: String) -> Result<Option<ExtensionMetadata>, surf::Error> {
   // get data for first one
   let mut filters = vec![];
   let mut criteria_list: Vec<Criterum> = Vec::new();
@@ -55,9 +59,32 @@ pub async fn get_extension_metadata(
     .body_json(filter_data)?
     .await?;
 
-  // TODO: fix auto parse and not use serde directly
-  let result: MarketplaceResponse = res.body_json().await?;
+  let result: Option<MarketplaceResponse> = res.body_json().await?;
 
-  Ok(Some(result))
+  // TODO: optimize with d0nut
+  if let Some(ext) = result {
+    if let Some(ext) = ext.results.get(0) {
+      if let Some(ext) = ext.extensions.get(0) {
+        let thing = ExtensionMetadata {
+          // TODO: d0nut
+          id: ext.extension_name.clone(),
+          url: create_link(ext.clone()),
+        };
+        return Ok(Some(thing));
+      }
+    }
+  }
 
+  Ok(None)
+}
+
+pub fn create_link(ext: Extension) -> String {
+  format!(
+    "https://marketplace.visualstudio.com/items?itemName={}",
+    get_extension_id(ext)
+  )
+}
+
+pub fn get_extension_id(extension: Extension) -> String {
+  return format!("{}.{}", extension.publisher.publisher_name, extension.extension_name);
 }

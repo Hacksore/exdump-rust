@@ -29,7 +29,7 @@ pub struct Extension {
     pub short_description: String,
     pub versions: Vec<Version>,
     pub categories: Vec<String>,
-    pub tags: Vec<String>,
+    pub tags: Option<Vec<String>>,
     pub installation_targets: Vec<InstallationTarget>,
     pub deployment_type: i64,
 }

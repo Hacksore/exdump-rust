@@ -22,8 +22,13 @@ async fn main() -> Result<(), surf::Error> {
   let extensions = get_vscode_extensions();
 
   // list the extensions in a loop
-  for i in &extensions {
-    println!("{:?}", i);
+  for id in &extensions {
+    // test getting data
+    let extension_data = get_extension_metadata(String::from(id)).await?;
+
+    if let Some(ext) = extension_data {
+      println!("{:#?}", ext)
+    }
   }
 
   // check if we have an option
@@ -31,20 +36,6 @@ async fn main() -> Result<(), surf::Error> {
     println!("Found file: {}", f);
   }
 
-  // test getting data
-  let extension_data = get_extension_metadata(String::from("tauri-apps.tauri-vscode")).await?;
-
-  // check results
-  if let Some(data) = extension_data {
-    // get first result
-    if let Some(result) = data.results.get(0) {     
-      let first_extension = result.extensions.get(0);
-      // check if the first one is valid; 
-      if let Some(extension) = first_extension {     
-        println!("{:?}", extension.display_name);
-      }
-    }
-  }
 
   Ok(())
 }
