@@ -21,7 +21,10 @@ pub fn get_vscode_extensions() -> Vec<String> {
 #[derive(Debug)]
 pub struct ExtensionMetadata {
   pub id: String,
+  pub display_name: String,
+  pub latest_version: String,
   pub url: String,
+  pub desc: String,
 }
 
 pub async fn get_extension_metadata(id: String) -> Result<Option<ExtensionMetadata>, surf::Error> {
@@ -64,10 +67,17 @@ pub async fn get_extension_metadata(id: String) -> Result<Option<ExtensionMetada
   // TODO: optimize with d0nut
   if let Some(ext) = result {
     if let Some(ext) = ext.results.get(0) {
-      if let Some(ext) = ext.extensions.get(0) {
+      if let Some(ext) = ext.extensions.get(0) {        
         let thing = ExtensionMetadata {
           // TODO: d0nut
           id: ext.extension_name.clone(),
+          display_name: ext.display_name.clone(),
+          desc: ext.short_description.clone(),
+          // TODO: more d0nut
+          latest_version: match ext.versions.get(0) {
+            Some(data) => data.version.clone(),
+            None => String::from("unknown"),
+        },
           url: create_link(ext.clone()),
         };
         return Ok(Some(thing));
@@ -86,5 +96,19 @@ pub fn create_link(ext: Extension) -> String {
 }
 
 pub fn get_extension_id(extension: Extension) -> String {
-  return format!("{}.{}", extension.publisher.publisher_name, extension.extension_name);
+  return format!(
+    "{}.{}",
+    extension.publisher.publisher_name, extension.extension_name
+  );
+}
+
+pub fn generate_markdown_table(extensions: Vec<ExtensionMetadata>) -> String {
+  let mut output = String::from("");
+  output.push_str("| Icon | Extension |\n ---- | ---- |\n");
+
+  for ext in &extensions {
+    output.push_str(&format!("| {} | {} |\n", ext.display_name, ext.url));
+  }
+
+  return output;
 }
